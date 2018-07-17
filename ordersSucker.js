@@ -1,7 +1,25 @@
 
 const fetch = require('node-fetch')
 const base64 = require('base-64');
+
+
+/*
+  refreshtoken: 'xxx',
+  secret: 'yyy',
+  clientid: 'zzz'
+*/
+
 const inputTokens = require('./privateKeys.js')
+
+const MongoClient = require('mongodb').MongoClient
+const assert = require('assert');
+
+// Connection URL
+const dbUrl = 'mongodb://localhost:27017/market';
+
+// Use connect method to connect to the server
+
+
 class Order {
   constructor(structure) {
     this.structure = null,
@@ -68,6 +86,21 @@ class Order {
 
   }
 
+  async writeToBase(data, structureData) {
+      const {name} = structureData
+      MongoClient.connect(dbUrl, function(err, client) {
+        assert.equal(null, err);
+        console.log("Connected successfully to database");
+        const db = client.db('market');
+          db.collection(name).insertMany([{...data}], function(err, r) {
+          assert.equal(null, err);
+          assert.equal(1, r.insertedCount);
+
+          client.close();
+        });
+    });
+  }
+
   async getStructureMarketOrders(structureData, page) {
     const {placeId, queryModificator = ''} = structureData
     const config = await this.getAccessToken(inputTokens);
@@ -103,6 +136,7 @@ class Order {
         ...this.finalPriceData,
         ...result
       ]
+      await this.writeToBase(result, this.structure)
       await this.getStructureMarketOrders(this.structure, this.currentPage)
 
     }
