@@ -7,8 +7,14 @@ require('node-google-apps-script')
 const base64 = require('base-64');
 
 const GoonHome = {
-  citadelID: 1022734985679,
+  placeId: 1022734985679,
   name: 'Goon_Capital'
+}
+
+const Forge = {
+  placeId: 10000002,
+  name: 'Forge',
+  queryModificator: '/orders'
 }
 const moment = require('moment');
 const currentDate = moment()
@@ -23,13 +29,22 @@ const currentDate = moment()
 const inputTokens = require('./privateKeys.js')
 const authUrl = 'https://login.eveonline.com/oauth/token?grant_type=refresh_token&refresh_token='
 const structuresCallUrl = 'https://esi.tech.ccp.is/latest/markets/structures/'
-
+const regionCallUrl = 'https://esi.evetech.net/latest/markets/'
 class Order {
   constructor(structure) {
     this.structure = null,
     this.pageCount = null,
     this.currentPage = 1,
-    this.finalPriceData = []
+    this.finalPriceData = [],
+    this.callUrl = structuresCallUrl
+  }
+
+  set callUrl(url) {
+    this._callUrl = url
+  }
+
+  get callUrl() {
+    return this._callUrl
   }
 
   set structure(structure) {
@@ -73,11 +88,11 @@ class Order {
   }
 
   async getStructureMarketOrders(structureData, page) {
-    const {citadelID} = structureData
+    const {placeId, queryModificator = ''} = structureData
     const config = await this.getAccessToken(inputTokens);
 
-    const url = structuresCallUrl + citadelID + '/?datasource=tranquility&page=' + page;
-
+    const url = `${this.callUrl}${placeId}${queryModificator}/?datasource=tranquility&page=${page}`
+    console.log(url)
     const parameters = {
       method: "get",
       headers: {
@@ -211,11 +226,15 @@ writeResultsToFile = async(pricesList, structureData) => {
   converter.json2csv(pricesList, csvConvertionCallback)
 }
 
-// getOrders(GoonHome).then((result) => writeResultsToFile(result, GoonHome))
 const goonOrders = new Order()
 goonOrders.structure = GoonHome;
 goonOrders
   .getPriceData()
   .then((data) => writeResultsToFile(data, GoonHome))
-// (async() => {   const data = await goonOrders.getPriceData()
-// console.log(data)   writeResultsToFile(data, GoonHome) })()
+
+// const ForgeOrders = new Order()
+// ForgeOrders.structure = Forge
+// ForgeOrders.callUrl = regionCallUrl
+// ForgeOrders
+//   .getPriceData()
+//   .then((data) => writeResultsToFile(data, Forge))
