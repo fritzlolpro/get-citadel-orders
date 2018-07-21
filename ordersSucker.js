@@ -1,7 +1,11 @@
 
 const fetch = require('node-fetch')
 const base64 = require('base-64');
-
+const moment = require('moment');
+const currentDate = moment()
+  .format("MM DD YY, HH")
+  .toString()
+  .replace(/\,|\s+/g, '-')
 
 /*
   refreshtoken: 'xxx',
@@ -18,7 +22,6 @@ const assert = require('assert');
 const dbUrl = 'mongodb://localhost:27017/market';
 
 // Use connect method to connect to the server
-
 
 class Order {
   constructor(structure) {
@@ -78,9 +81,11 @@ class Order {
   }
 
   async getPriceData() {
+
     return await this
       .getStructureMarketOrders(this.structure, this.currentPage)
       .then(() => {
+
         return this.finalPriceData
       })
 
@@ -88,21 +93,25 @@ class Order {
 
   async writeToBase(data, structureData) {
       const {name} = structureData
+      const dbName = name + '_' + currentDate
       MongoClient.connect(dbUrl, function(err, client) {
         assert.equal(null, err);
-        console.log("Connected successfully to database");
+        // console.log("Connected successfully to database");
         const db = client.db('market');
-          db.collection(name).insertMany([{...data}], function(err, r) {
-          assert.equal(null, err);
-          assert.equal(1, r.insertedCount);
+        db.collection(dbName).insertMany([...data])
+        // .then(result => console.log(result.result))
+        //   db.collection(name).insertMany([{...data}], function(err, r) {
+        //   assert.equal(null, err);
+        //   assert.equal(1, r.insertedCount);
 
-          client.close();
-        });
+        //   client.close();
+        // });
+        client.close();
     });
   }
 
   async getStructureMarketOrders(structureData, page) {
-    const {placeId, queryModificator = ''} = structureData
+    const {name, placeId, queryModificator = ''} = structureData
     const config = await this.getAccessToken(inputTokens);
 
     const url = `${this.callUrl}${placeId}${queryModificator}/?datasource=tranquility&page=${page}`
@@ -128,7 +137,7 @@ class Order {
       this.pageCount = pagesInResponce
     }
     // console.log(json)
-    const result = this.formPriceDataBulk(json, page === 1)
+    const result = this.formPriceDataBulk(json, page === 1, name)
     console.log(this.pageCount, this.currentPage)
     while (this.currentPage < this.pageCount) {
       this.currentPage++;
@@ -136,6 +145,7 @@ class Order {
         ...this.finalPriceData,
         ...result
       ]
+      // await result.map(elem => this.writeToBase(elem, this.structure))
       await this.writeToBase(result, this.structure)
       await this.getStructureMarketOrders(this.structure, this.currentPage)
 
@@ -166,39 +176,41 @@ class Order {
     return config;
   }
 
-  formPriceDataBulk(priceList, shouldFormHeaders = false) {
+  formPriceDataBulk(priceList, shouldFormHeaders = false, name) {
     let prices = []
-    if (shouldFormHeaders) {
-      prices.push([
-        'duration',
-        'buy',
-        'issued',
-        'location',
-        'min volume',
-        'order id',
-        'price',
-        'range',
-        'typeid',
-        'volume remaining',
-        'total volume'
-      ])
-    }
+    // if (shouldFormHeaders) {
+    //   prices.push([
+    //     'duration',
+    //     'buy',
+    //     'issued',
+    //     'location',
+    //     'min volume',
+    //     'order id',
+    //     'price',
+    //     'range',
+    //     'typeid',
+    //     'volume remaining',
+    //     'total volume'
+    //   ])
+    // }
 
     for (const i in priceList) {
 
-      const price = [
-        priceList[i].duration,
-        priceList[i].is_buy_order,
-        priceList[i].issued,
-        priceList[i].location_id,
-        priceList[i].min_volume,
-        priceList[i].order_id,
-        priceList[i].price,
-        priceList[i].range,
-        priceList[i].type_id,
-        priceList[i].volume_remain,
-        priceList[i].volume_total
-      ];
+      const price = {
+        typeId: priceList[i].type_id,
+        [name]: {
+          duration: priceList[i].duration,
+          isBuy: priceList[i].is_buy_order,
+          issued: priceList[i].issued,
+          location: priceList[i].location_id,
+          minVolume: priceList[i].min_volume,
+          orderId: priceList[i].order_id,
+          price: priceList[i].price,
+          range: priceList[i].range,
+          volumeRemaining: priceList[i].volume_remain,
+          volumetotal: priceList[i].volume_total
+        }
+      };
       prices = [
         ...prices,
         ...[price]
