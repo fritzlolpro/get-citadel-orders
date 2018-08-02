@@ -197,18 +197,20 @@ class Order {
     for (const i in priceList) {
 
       const price = {
-        typeId: priceList[i].type_id,
-        [name]: {
-          duration: priceList[i].duration,
-          isBuy: priceList[i].is_buy_order,
-          issued: priceList[i].issued,
-          location: priceList[i].location_id,
-          minVolume: priceList[i].min_volume,
-          orderId: priceList[i].order_id,
-          price: priceList[i].price,
-          range: priceList[i].range,
-          volumeRemaining: priceList[i].volume_remain,
-          volumetotal: priceList[i].volume_total
+        order: {
+          typeId: priceList[i].type_id,
+          body: {
+            duration: priceList[i].duration,
+            isBuy: priceList[i].is_buy_order,
+            issued: priceList[i].issued,
+            location: priceList[i].location_id,
+            minVolume: priceList[i].min_volume,
+            orderId: priceList[i].order_id,
+            price: priceList[i].price,
+            range: priceList[i].range,
+            volumeRemaining: priceList[i].volume_remain,
+            volumetotal: priceList[i].volume_total
+          }
         }
       };
       prices = [

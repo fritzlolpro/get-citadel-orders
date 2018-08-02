@@ -10,23 +10,50 @@ const dbUrl = 'mongodb://localhost:27017/market';
 
 // // Use connect method to connect to the server
 
+const orderComposer = (order) => {
+
+}
+
 const comparePrices = async () => {
 
   co(function*() {
     const db = yield MongoClient.connect(dbUrl)
     // console.log(db)
-    const goonCollection = db.collection('Goon_Capital_07-21-18--13')
-    const forgeCollection = db.collection('Forge_07-21-18--14')
+    const goonCollection = db.collection('Delve_07-22-18--02')
+    const forgeCollection = db.collection('Forge_07-22-18--02')
+
     const goonOrderList = yield goonCollection.find().toArray()
-    const goonTypeIds = goonOrderList.map(x => x['typeId'])
+
+    const goonTypeIds = goonOrderList.map(x => x.order['typeId'])
+
     const query = {
-      typeId: { $nin: goonTypeIds }
+     'order.typeId': { $nin: goonTypeIds }
     }
     const forgeOrderList = yield forgeCollection.find(query).toArray()
-    // forgeOrderList.map(forgeOrder => {
-    //   if (forgeOrder['typeId'] === )
+    // const goodOrders =  forgeOrderList.map(forgeOrder => {
+    //   const id = forgeOrder['typeId']
+    //   const matchedGoonOrder = goonOrderList.filter(order => order['typeId'] === id)[0]
+
+    //   const forgePrice = forgeOrder.order.id['price']
+    //   const delvePrice = matchedGoonOrder.order[id]['price']
+
+    //   if ((forgePrice * 1.2) <= delvePrice) {
+    //     return {
+    //       order: {
+    //         typeId: id,
+    //         fordge: {
+    //           ...forgeOrder.order[id]
+    //         },
+    //         delve: {
+    //           ...matchedGoonOrder.order[id]
+    //         }
+    //       }
+    //     }
+    //   }
     // })
-    console.log(forgeOrderList.length)
+    // console.log(goodOrders)
+    console.log(forgeOrderList.filter(x => x.order['40337']) )
+
     db.close()
   }).catch(error => console.log(error.stack))
   // const db = await mongo.MongoClient.connect(dbUrl)
@@ -85,4 +112,4 @@ const regionCallUrl = 'https://esi.evetech.net/latest/markets/'
 
 //     })
 
-// comparePrices()
+comparePrices()
