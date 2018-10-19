@@ -1,21 +1,22 @@
 const Order = require('./ordersSucker')
+const { getNewestDBName, currentDate } = require('./ordersSucker')
 const writeJsonToFile = require('./fileWriter')
-
 
 const MongoClient = require('mongodb').MongoClient
 const assert = require('assert');
 const co = require('co')
+const mongoose = require('mongoose');
+mongoose.Promise = global.Promise;
 // Connection URL
 const dbUrl = 'mongodb://localhost:27017/market';
 
-// // Use connect method to connect to the server
 
 const orderComposer = (order) => {
 
 }
 
 const comparePrices = async () => {
-
+  // todo remove co, build actual name with function, use mongoose to suck
   co(function* () {
     const db = yield MongoClient.connect(dbUrl)
     // console.log(db)
@@ -89,12 +90,12 @@ const comparePrices = async () => {
 
 const GoonHome = {
   placeId: 1022734985679,
-  name: 'Delve'
+  name: 'delve'
 }
 
 const Forge = {
   placeId: 10000002,
-  name: 'Forge',
+  name: 'forge',
   queryModificator: '/orders'
 }
 
@@ -111,11 +112,11 @@ goonOrders
 //   writeJsonToFile(data, GoonHome)
 // })
 
-const ForgeOrders = new Order()
-ForgeOrders.structure = Forge
-ForgeOrders.callUrl = regionCallUrl
-ForgeOrders
-  .getPriceData()
+// const ForgeOrders = new Order()
+// ForgeOrders.structure = Forge
+// ForgeOrders.callUrl = regionCallUrl
+// ForgeOrders
+//   .getPriceData()
   // .then((data) => {
   //   writeJsonToFile(data, Forge)
 

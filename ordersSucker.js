@@ -5,11 +5,12 @@ const moment = require('moment');
 const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 
-const currentDate = moment()
+exports.currentDate = moment()
   .format("MM DD YY, HH")
   .toString()
   .replace(/\,|\s+/g, '-')
 
+exports.getNewestDBName = name => currentDate => name + '_' + currentDate
 /*
   refreshtoken: 'xxx',
   secret: 'yyy',
@@ -127,24 +128,10 @@ class Order {
   }
 
   async writeToBase(data, structureData) {
-    const { name } = structureData
-    const dbName = name + '_' + currentDate
-    const OrderDB = mongoose.model(`${name}`, storeSchema);
-    const ordersList = await OrderDB.insertMany([...data])
-    // MongoClient.connect(dbUrl, function (err, client) {
-    //   assert.equal(null, err);
-    //   // console.log("Connected successfully to database");
-    //   const db = client.db('market');
-    //   db.collection(dbName).insertMany([...data])
-    //   // .then(result => console.log(result.result))
-    //   //   db.collection(name).insertMany([{...data}], function(err, r) {
-    //   //   assert.equal(null, err);
-    //   //   assert.equal(1, r.insertedCount);
 
-    //   //   client.close();
-    //   // });
-    //   client.close();
-    // });
+    const { name } = structureData
+    const OrderDB = mongoose.model(`${getNewestDBName(name)(currentDate)}`, storeSchema);
+    return OrderDB.insertMany([...data])
   }
 
   async getStructureMarketOrders(structureData, page) {
