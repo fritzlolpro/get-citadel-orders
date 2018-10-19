@@ -2,6 +2,9 @@
 const fetch = require('node-fetch')
 const base64 = require('base-64');
 const moment = require('moment');
+const mongoose = require('mongoose');
+mongoose.Promise = global.Promise;
+
 const currentDate = moment()
   .format("MM DD YY, HH")
   .toString()
@@ -19,17 +22,49 @@ const MongoClient = require('mongodb').MongoClient
 const assert = require('assert');
 
 // Connection URL
-const dbUrl = 'mongodb://localhost:27017/market';
+mongoose.connect('mongodb://localhost:27017/market');
+// const dbUrl = 'mongodb://localhost:27017/market';
 
 // Use connect method to connect to the server
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function () {
+  console.log('Connected to DB!')
+});
+
+const storeSchema = new mongoose.Schema({
+  order: {
+    typeId: Number,
+    body: {
+      duration: Number,
+      isBuy: Boolean,
+      issued: String,
+      location: Number,
+      minVolume: Number,
+      orderId: Number,
+      price: Number,
+      range: String,
+      volumeRemaining: Number,
+      volumeTotal: Number
+    }
+  }
+});
+
+storeSchema.pre('save', function (next) {
+  if (!this.isModified()) {
+    next(); // skip it
+    return; // stop this function from running
+  }
+});
+
 
 class Order {
   constructor(structure) {
     this.structure = null,
-    this.pageCount = null,
-    this.currentPage = 1,
-    this.finalPriceData = [],
-    this.callUrl = 'https://esi.tech.ccp.is/latest/markets/structures/'
+      this.pageCount = null,
+      this.currentPage = 1,
+      this.finalPriceData = [],
+      this.callUrl = 'https://esi.tech.ccp.is/latest/markets/structures/'
     this.authUrl = 'https://login.eveonline.com/oauth/token?grant_type=refresh_token&refresh_token='
   }
 
@@ -92,26 +127,28 @@ class Order {
   }
 
   async writeToBase(data, structureData) {
-      const {name} = structureData
-      const dbName = name + '_' + currentDate
-      MongoClient.connect(dbUrl, function(err, client) {
-        assert.equal(null, err);
-        // console.log("Connected successfully to database");
-        const db = client.db('market');
-        db.collection(dbName).insertMany([...data])
-        // .then(result => console.log(result.result))
-        //   db.collection(name).insertMany([{...data}], function(err, r) {
-        //   assert.equal(null, err);
-        //   assert.equal(1, r.insertedCount);
+    const { name } = structureData
+    const dbName = name + '_' + currentDate
+    const OrderDB = mongoose.model(`${name}`, storeSchema);
+    const ordersList = await OrderDB.insertMany([...data])
+    // MongoClient.connect(dbUrl, function (err, client) {
+    //   assert.equal(null, err);
+    //   // console.log("Connected successfully to database");
+    //   const db = client.db('market');
+    //   db.collection(dbName).insertMany([...data])
+    //   // .then(result => console.log(result.result))
+    //   //   db.collection(name).insertMany([{...data}], function(err, r) {
+    //   //   assert.equal(null, err);
+    //   //   assert.equal(1, r.insertedCount);
 
-        //   client.close();
-        // });
-        client.close();
-    });
+    //   //   client.close();
+    //   // });
+    //   client.close();
+    // });
   }
 
   async getStructureMarketOrders(structureData, page) {
-    const {name, placeId, queryModificator = ''} = structureData
+    const { name, placeId, queryModificator = '' } = structureData
     const config = await this.getAccessToken(inputTokens);
 
     const url = `${this.callUrl}${placeId}${queryModificator}/?datasource=tranquility&page=${page}`

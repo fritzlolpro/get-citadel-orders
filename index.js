@@ -16,7 +16,7 @@ const orderComposer = (order) => {
 
 const comparePrices = async () => {
 
-  co(function*() {
+  co(function* () {
     const db = yield MongoClient.connect(dbUrl)
     // console.log(db)
     const goonCollection = db.collection('Delve_07-22-18--02')
@@ -27,9 +27,10 @@ const comparePrices = async () => {
     const goonTypeIds = goonOrderList.map(x => x.order['typeId'])
 
     const query = {
-     'order.typeId': { $nin: goonTypeIds }
+      'order.typeId': { $nin: goonTypeIds }
     }
     const forgeOrderList = yield forgeCollection.find(query).toArray()
+
     // const goodOrders =  forgeOrderList.map(forgeOrder => {
     //   const id = forgeOrder['typeId']
     //   const matchedGoonOrder = goonOrderList.filter(order => order['typeId'] === id)[0]
@@ -52,7 +53,15 @@ const comparePrices = async () => {
     //   }
     // })
     // console.log(goodOrders)
-    console.log(forgeOrderList.filter(x => x.order['40337']) )
+
+    const sliceUpper = (orderList) => {
+      orderList.map(order => {
+
+      })
+    }
+
+
+    console.log(forgeOrderList.filter(x => x.order['40337']))
 
     db.close()
   }).catch(error => console.log(error.stack))
@@ -94,22 +103,22 @@ const structuresCallUrl = 'https://esi.tech.ccp.is/latest/markets/structures/'
 const regionCallUrl = 'https://esi.evetech.net/latest/markets/'
 
 
-// const goonOrders = new Order()
-// goonOrders.structure = GoonHome;
-// goonOrders
-//   .getPriceData()
-//   .then((data) => {
-//     writeJsonToFile(data, GoonHome)
-//     })
+const goonOrders = new Order()
+goonOrders.structure = GoonHome;
+goonOrders
+  .getPriceData()
+// .then((data) => {
+//   writeJsonToFile(data, GoonHome)
+// })
 
-// const ForgeOrders = new Order()
-// ForgeOrders.structure = Forge
-// ForgeOrders.callUrl = regionCallUrl
-// ForgeOrders
-//   .getPriceData()
-//   .then((data) => {
-//     writeJsonToFile(data, Forge)
+const ForgeOrders = new Order()
+ForgeOrders.structure = Forge
+ForgeOrders.callUrl = regionCallUrl
+ForgeOrders
+  .getPriceData()
+  // .then((data) => {
+  //   writeJsonToFile(data, Forge)
 
-//     })
+  // })
 
-comparePrices()
+// comparePrices()
