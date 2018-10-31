@@ -4,7 +4,7 @@ const base64 = require('base-64');
 const moment = require('moment');
 const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
-
+dbUrl = require('./index.js')
 exports.currentDate = moment()
   .format("MM DD YY, HH")
   .toString()
@@ -23,7 +23,7 @@ const MongoClient = require('mongodb').MongoClient
 const assert = require('assert');
 
 // Connection URL
-mongoose.connect('mongodb://localhost:27017/market');
+mongoose.connect(dbUrl);
 // const dbUrl = 'mongodb://localhost:27017/market';
 
 // Use connect method to connect to the server

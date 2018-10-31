@@ -8,7 +8,7 @@ const co = require('co')
 const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 // Connection URL
-const dbUrl = 'mongodb://localhost:27017/market';
+module.exports dbUrl = 'mongodb://localhost:27017/market';
 
 
 const orderComposer = (order) => {
