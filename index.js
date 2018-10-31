@@ -11,9 +11,7 @@ mongoose.Promise = global.Promise;
 const dbUrl = 'mongodb://localhost:27017/market';
 
 
-const orderComposer = (order) => {
 
-}
 
 const comparePrices = async () => {
   // todo remove co, build actual name with function, use mongoose to suck
