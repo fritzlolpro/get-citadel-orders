@@ -20,7 +20,7 @@ writeJsonToFile = async(pricesList, structureData) => {
   }
   fs.writeFile(`./output/${name}--${currentDate}.json`, jsonFormat(pricesList, JSONformatterConfig), function (err) {
     if (err) {
-      return console.log(err);
+       throw new Error(err)
     }
     console.log("The file was saved !");
   });

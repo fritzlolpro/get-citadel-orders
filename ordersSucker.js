@@ -24,14 +24,9 @@ const assert = require('assert');
 
 // Connection URL
 mongoose.connect('mongodb://localhost:27017/market');
-// const dbUrl = 'mongodb://localhost:27017/market';
+
 
 // Use connect method to connect to the server
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'connection error:'));
-db.once('open', function () {
-  console.log('Connected to DB!')
-});
 
 const storeSchema = new mongoose.Schema({
   order: {
@@ -169,7 +164,7 @@ class Order {
         ...this.finalPriceData,
         ...result
       ]
-      // await result.map(elem => this.writeToBase(elem, this.structure))
+     
       await this.writeToBase(result, this.structure)
       await this.getStructureMarketOrders(this.structure, this.currentPage)
 
@@ -202,21 +197,7 @@ class Order {
 
   formPriceDataBulk(priceList, shouldFormHeaders = false, name) {
     let prices = []
-    // if (shouldFormHeaders) {
-    //   prices.push([
-    //     'duration',
-    //     'buy',
-    //     'issued',
-    //     'location',
-    //     'min volume',
-    //     'order id',
-    //     'price',
-    //     'range',
-    //     'typeid',
-    //     'volume remaining',
-    //     'total volume'
-    //   ])
-    // }
+    
 
     for (const i in priceList) {
 
