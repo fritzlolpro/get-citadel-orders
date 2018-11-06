@@ -37,7 +37,7 @@ const comparePrices = async () => {
 
   //   db.close()
   // }).catch(error => console.log(error.stack))
-  const goonOrderList = await goonDB.find().toArray()
+  const goonOrderList = await goonDB.find()
   const goonTypeIds = goonOrderList.map(x => x.order['typeId'])
   const query = {
     'order.typeId': { $nin: goonTypeIds }
