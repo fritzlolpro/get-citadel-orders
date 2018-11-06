@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 
 // Connection URL
-mongoose.connect('mongodb://localhost:27017/market');
+mongoose.connect(process.env.DB_URL);
 // const dbUrl = 'mongodb://localhost:27017/market';
 
 // Use connect method to connect to the server

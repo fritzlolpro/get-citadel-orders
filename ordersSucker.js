@@ -3,13 +3,13 @@ const fetch = require('node-fetch')
 const base64 = require('base-64');
 const { goonDB, forgeDB } = require('./dbConnector')
 
-/*
-  refreshtoken: 'xxx',
-  secret: 'yyy',
-  clientid: 'zzz'
-*/
 
-const inputTokens = require('./privateKeys.js')
+
+const inputTokens = {
+  refreshToken: process.env.REFRESH_TOKEN,
+  secret: process.env.SECRET_TOKEN,
+  clientId: process.env.CLIENT_ID
+}
 
 class Order {
   constructor(structure) {
@@ -141,9 +141,9 @@ class Order {
   }
   async getAccessToken(config) {
 
-    const url = this.authUrl + config.refreshtoken;
+    const url = this.authUrl + config.refreshToken;
 
-    const code = base64.encode(config.clientid + ':' + config.secret);
+    const code = base64.encode(config.clientId + ':' + config.secret);
 
     const headers = {
       'Authorization': 'Basic ' + code,
