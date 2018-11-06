@@ -2,3 +2,5 @@
 /output
 privateKeys.js
 .DS_Store
+.env
+.env.testing
