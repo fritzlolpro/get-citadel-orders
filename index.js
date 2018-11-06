@@ -1,21 +1,10 @@
-bconst Order = require('./ordersSucker')
-const { getNewestDBName, currentDate } = require('./ordersSucker')
+const Order = require('./ordersSucker')
 const writeJsonToFile = require('./fileWriter')
-
-const MongoClient = require('mongodb').MongoClient
-const assert = require('assert');
-const co = require('co')
-const mongoose = require('mongoose');
-mongoose.Promise = global.Promise;
-// Connection URL
-const dbUrl = 'mongodb://localhost:27017/market';
+const { goonDB, forgeDB } = require('./dbConnector')
 
 
-const orderComposer = (order) => {
 
-}
-const goonDB = mongoose.model(`${getNewestDBName('Delve')(currentDate)}`)
-const forgeDB = mongoose.model(`${getNewestDBName('Forge')(currentDate)}`)
+
 
 
 const comparePrices = async () => {
@@ -35,7 +24,7 @@ const comparePrices = async () => {
   //   }
   //   const forgeOrderList = yield forgeCollection.find(query).toArray()
 
-   
+
 
   //   const sliceUpper = (orderList) => {
   //     orderList.map(order => {
@@ -51,20 +40,20 @@ const comparePrices = async () => {
   const goonOrderList = await goonDB.find().toArray()
   const goonTypeIds = goonOrderList.map(x => x.order['typeId'])
   const query = {
-        'order.typeId': { $nin: goonTypeIds }
-      }
+    'order.typeId': { $nin: goonTypeIds }
+  }
   const forgeOrderList = await forgeCollection.find(query).toArray()
 }
 
 
 const GoonHome = {
   placeId: 1022734985679,
-  name: 'delve'
+  name: 'Delve'
 }
 
 const Forge = {
   placeId: 10000002,
-  name: 'forge',
+  name: 'Forge',
   queryModificator: '/orders'
 }
 
@@ -77,18 +66,18 @@ const goonOrders = new Order()
 goonOrders.structure = GoonHome;
 goonOrders
   .getPriceData()
-// .then((data) => {
-//   writeJsonToFile(data, GoonHome)
-// })
+  .then((data) => {
+    writeJsonToFile(data, GoonHome)
+  })
 
-// const ForgeOrders = new Order()
-// ForgeOrders.structure = Forge
-// ForgeOrders.callUrl = regionCallUrl
-// ForgeOrders
-//   .getPriceData()
-  // .then((data) => {
-  //   writeJsonToFile(data, Forge)
+const ForgeOrders = new Order()
+ForgeOrders.structure = Forge
+ForgeOrders.callUrl = regionCallUrl
+ForgeOrders
+  .getPriceData()
+  .then((data) => {
+    writeJsonToFile(data, Forge)
 
-  // })
+  })
 
 // comparePrices()

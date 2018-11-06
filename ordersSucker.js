@@ -1,16 +1,8 @@
 
 const fetch = require('node-fetch')
 const base64 = require('base-64');
-const moment = require('moment');
-const mongoose = require('mongoose');
-mongoose.Promise = global.Promise;
+const { goonDB, forgeDB } = require('./dbConnector')
 
-exports.currentDate = moment()
-  .format("MM DD YY, HH")
-  .toString()
-  .replace(/\,|\s+/g, '-')
-
-exports.getNewestDBName = name => currentDate => name + '_' + currentDate
 /*
   refreshtoken: 'xxx',
   secret: 'yyy',
@@ -18,46 +10,6 @@ exports.getNewestDBName = name => currentDate => name + '_' + currentDate
 */
 
 const inputTokens = require('./privateKeys.js')
-
-const MongoClient = require('mongodb').MongoClient
-const assert = require('assert');
-
-// Connection URL
-mongoose.connect('mongodb://localhost:27017/market');
-// const dbUrl = 'mongodb://localhost:27017/market';
-
-// Use connect method to connect to the server
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'connection error:'));
-db.once('open', function () {
-  console.log('Connected to DB!')
-});
-
-const storeSchema = new mongoose.Schema({
-  order: {
-    typeId: Number,
-    body: {
-      duration: Number,
-      isBuy: Boolean,
-      issued: String,
-      location: Number,
-      minVolume: Number,
-      orderId: Number,
-      price: Number,
-      range: String,
-      volumeRemaining: Number,
-      volumeTotal: Number
-    }
-  }
-});
-
-storeSchema.pre('save', function (next) {
-  if (!this.isModified()) {
-    next(); // skip it
-    return; // stop this function from running
-  }
-});
-
 
 class Order {
   constructor(structure) {
@@ -117,11 +69,10 @@ class Order {
   }
 
   async getPriceData() {
-
+    await this.resetBase(this.structure.name)
     return await this
       .getStructureMarketOrders(this.structure, this.currentPage)
       .then(() => {
-
         return this.finalPriceData
       })
 
@@ -130,10 +81,23 @@ class Order {
   async writeToBase(data, structureData) {
 
     const { name } = structureData
-    const OrderDB = mongoose.model(`${getNewestDBName(name)(currentDate)}`, storeSchema);
-    return OrderDB.insertMany([...data])
+    if (name === 'Delve') {
+      await goonDB.insertMany([...data])
+    }
+    if (name === 'Forge') {
+      await forgeDB.insertMany([...data])
+    }
   }
 
+  async resetBase(name) {
+    if (name === 'Delve') {
+      await goonDB.deleteMany({})
+    }
+    if (name === 'Forge') {
+      await forgeDB.deleteMany({})
+    }
+
+  }
   async getStructureMarketOrders(structureData, page) {
     const { name, placeId, queryModificator = '' } = structureData
     const config = await this.getAccessToken(inputTokens);
@@ -171,7 +135,7 @@ class Order {
       ]
       // await result.map(elem => this.writeToBase(elem, this.structure))
       await this.writeToBase(result, this.structure)
-      await this.getStructureMarketOrders(this.structure, this.currentPage)
+      return await this.getStructureMarketOrders(this.structure, this.currentPage)
 
     }
   }
