@@ -38,18 +38,40 @@ const comparePrices = async () => {
 
   //   db.close()
   // }).catch(error => console.log(error.stack))
-  const goonOrderIdList = Array.from(await goonDB.find({}).select('order.typeId -_id')).map(x => x.order.typeId)
+  const goonOrders = Array.from(await goonDB.find({}))
+  const goonOrderIdList = Array.from(new Set(goonOrders.map(x => x.order.typeId)))
+
   const query = {
     'order.typeId': { $nin: goonOrderIdList }
   }
-  const forgeOrderList = await forgeDB.find(query)
-  // 1. group all orders with same type ID
-  const mergedGoonOrders = Array.from(await goonDB.find({}).select('order.typeId -_id')).map(x => x.order.typeId)
-  const orderMerger = async (idList) => await idList.map(id => {
-    return async () => Array.from(await goonDB.find({ 'order.typeId': id }))
-    // reduce
-  }).then(console.log(orderMerger(goonOrderIdList)))
 
+  const forgeOrders = await forgeDB.find(query)
+  const forgeOrderIdList = Array.from(new Set(forgeOrders.map(x => x.order.typeId)))
+
+  // 1. group all orders with same type ID
+
+  const orderMerger = (idList, orders) => {
+    // ! figure out why this shit works so sloow
+    // TODO get sober, try mongo aggregations(???)
+    const merge = (acc, curr) => acc = {
+      typeId: curr.order.typeId,
+      isBuy: curr.order.body.isBuy,
+      price: acc.price ? acc.price.concat([curr.order.body.price]) : [].concat([curr.order.body.price]),
+    }
+    const separatedOrders = idList.map(id => ({
+      [id]: {
+        buy: orders.filter(order => order.order.typeId === id && order.order.body.isBuy).reduce(merge, {}),
+        sell: orders.filter(order => order.order.typeId === id && !order.order.body.isBuy).reduce(merge, {})
+      }
+    }))
+    console.log(separatedOrders)
+    // return {
+    //   buys: buyOrders.reduce(merge, {}),
+    //   sells: sellOrders.reduce(merge, {})
+    // }
+  }
+
+  orderMerger(goonOrderIdList, goonOrders)
   /*
     order: {
       typeID: xxxx,
