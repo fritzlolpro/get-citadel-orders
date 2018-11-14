@@ -68,6 +68,12 @@ const comparePrices = async () => {
     return separatedOrders
   }
 
+  const findPriceDifference = cutLarger => prices => prices.sort((a, b) => a - b).forEach((price, i) => {
+    if (price * 10 > prices[prices.length - 1]) {
+
+    }
+  })
+
   orderMerger(goonOrderIdList, goonOrders)
   /*
     order: {
