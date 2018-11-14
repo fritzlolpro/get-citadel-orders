@@ -52,23 +52,20 @@ const comparePrices = async () => {
 
   const orderMerger = (idList, orders) => {
     // ! figure out why this shit works so sloow
-    // TODO get sober, try mongo aggregations(???)
-    const merge = (acc, curr) => acc = {
+    // TODO get sober, try mongo pipeline aggregations(???)
+    const merge = (acc, curr) => ({
       typeId: curr.order.typeId,
       isBuy: curr.order.body.isBuy,
       price: acc.price ? acc.price.concat([curr.order.body.price]) : [].concat([curr.order.body.price]),
-    }
+    })
     const separatedOrders = idList.map(id => ({
       [id]: {
         buy: orders.filter(order => order.order.typeId === id && order.order.body.isBuy).reduce(merge, {}),
         sell: orders.filter(order => order.order.typeId === id && !order.order.body.isBuy).reduce(merge, {})
       }
     }))
-    console.log(separatedOrders)
-    // return {
-    //   buys: buyOrders.reduce(merge, {}),
-    //   sells: sellOrders.reduce(merge, {})
-    // }
+    // console.log(separatedOrders)
+    return separatedOrders
   }
 
   orderMerger(goonOrderIdList, goonOrders)
