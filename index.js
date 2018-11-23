@@ -42,29 +42,51 @@ const comparePrices = async () => {
 			existingItemsKeys.push(order.typeId);
 		});
 		// console.log(separatedOrders);
-		return separatedOrders;
+		return new Map(Object.entries(separatedOrders));
 	};
+
+	// 2. in every order balance prices
+	const compareByExponent = (num1, num2) => num1 * 10 > num2;
 
 	const cutTooSmall = prices =>
 		prices
 			.sort((a, b) => a - b)
 			.map((price, i, arr) => {
-				if (price * 10 < arr[arr.length - 1]) {
+				if (compareByExponent(price, arr[arr.length - 1])) {
 					arr[arr.length - 1] = "";
 				}
 				return price;
 			});
 
-	orderMerger(goonOrders);
-	/*
-          order: {
-            typeID: xxxx,
-            price: [all prices],
-            vol: xxx,
-            ...other fields
-          }
-        */
-	// 2. in every order balance prices
+	const cutTooBig = prices =>
+		prices
+			.sort((a, b) => b - a)
+			.map((price, i, arr) => {
+				if (compareByExponent(price, arr[arr.length - 1])) {
+					arr[i] = "";
+				}
+				return price;
+			});
+
+	// todo separate function for merging
+
+	let normalizedOrders = orderMerger(goonOrders);
+	normalizedOrders.forEach(order => {
+		// console.log(order);
+		if (order.sell) {
+			order.sell =
+				order.sell.price.length > 1
+					? cutTooBig(order.sell.price)
+					: order.sell.price[0];
+		}
+		if (order.buy) {
+			order.buy =
+				order.buy.price.length > 1
+					? cutTooSmall(order.buy.price)
+					: order.buy.price[0];
+		}
+	});
+	console.log(normalizedOrders);
 };
 
 const GoonHome = {
