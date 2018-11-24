@@ -8,7 +8,6 @@ const comparePrices = async () => {
 	const goonOrderIdList = Array.from(
 		new Set(goonOrders.map(x => x.order.typeId))
 	);
-
 	const query = {
 		"order.typeId": { $nin: goonOrderIdList }
 	};
@@ -34,7 +33,11 @@ const comparePrices = async () => {
 							order.body.isBuy ? "buy" : "sell"
 					  ] = { price: [order.body.price] });
 			} else {
-				separatedOrders[order.typeId] = {};
+				separatedOrders[order.typeId] = {
+					typeId: order.typeId,
+					sell: { price: [] },
+					buy: { price: [] }
+				};
 				separatedOrders[order.typeId][order.body.isBuy ? "buy" : "sell"] = {
 					price: [order.body.price]
 				};
@@ -68,25 +71,51 @@ const comparePrices = async () => {
 				return price;
 			});
 
+	const avrValue = (sum, occurancies) => sum / occurancies;
 	// todo separate function for merging
+	const calculateMedium = prices => {
+		const clearPrices = prices.filter(price => price !== "");
+		return avrValue(
+			clearPrices.reduce((acc, curr) => acc + curr, 0),
+			clearPrices.length
+		);
+	};
 
-	let normalizedOrders = orderMerger(goonOrders);
-	normalizedOrders.forEach(order => {
-		// console.log(order);
-		if (order.sell) {
-			order.sell =
-				order.sell.price.length > 1
-					? cutTooBig(order.sell.price)
-					: order.sell.price[0];
-		}
-		if (order.buy) {
-			order.buy =
-				order.buy.price.length > 1
-					? cutTooSmall(order.buy.price)
-					: order.buy.price[0];
-		}
-	});
-	console.log(normalizedOrders);
+	const orderPriceProcessor = cutFunction => prices =>
+		calculateMedium(cutFunction(prices));
+
+	const normalizeOrders = orderList => {
+		let processedOrders = orderMerger(orderList);
+		processedOrders.forEach(order => {
+			// console.log(order);
+			if (order.sell) {
+				order.sell =
+					order.sell.price.length > 1
+						? orderPriceProcessor(cutTooBig)(order.sell.price)
+						: order.sell.price[0];
+			}
+			if (order.buy) {
+				order.buy =
+					order.buy.price.length > 1
+						? orderPriceProcessor(cutTooSmall)(order.buy.price)
+						: order.buy.price[0];
+			}
+		});
+		return processedOrders;
+	};
+	const adjustToScema = objectMap => {
+		let schemitized = [];
+		objectMap.forEach(x => schemitized.push(x));
+		return schemitized;
+	};
+	return Promise.all([
+		writeJsonToFile(adjustToScema(normalizeOrders(goonOrders)), {
+			name: "GoonMarket"
+		}),
+		writeJsonToFile(adjustToScema(normalizeOrders(forgeOrders)), {
+			name: "ForgeMarket"
+		})
+	]);
 };
 
 const GoonHome = {
@@ -103,22 +132,21 @@ const Forge = {
 const structuresCallUrl = "https://esi.tech.ccp.is/latest/markets/structures/";
 const regionCallUrl = "https://esi.evetech.net/latest/markets/";
 
-// const goonOrders = new Order()
-// goonOrders.structure = GoonHome;
-// goonOrders
-//     .getPriceData()
-//     .then((data) => {
-//         writeJsonToFile(data, GoonHome)
-//     })
+const getAllData = async () => {
+	const goonOrders = new Order();
+	const ForgeOrders = new Order();
 
-// const ForgeOrders = new Order()
-// ForgeOrders.structure = Forge
-// ForgeOrders.callUrl = regionCallUrl
-// ForgeOrders
-//     .getPriceData()
-//     .then((data) => {
-//         writeJsonToFile(data, Forge)
-
-//     })
-
+	goonOrders.structure = GoonHome;
+	ForgeOrders.structure = Forge;
+	ForgeOrders.callUrl = regionCallUrl;
+	return Promise.all([
+		goonOrders.getPriceData().then(data => {
+			writeJsonToFile(data, GoonHome);
+		}),
+		ForgeOrders.getPriceData().then(data => {
+			writeJsonToFile(data, Forge);
+		})
+	]);
+};
+// getAllData().then(() => comparePrices());
 comparePrices();
